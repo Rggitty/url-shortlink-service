@@ -1,17 +1,33 @@
-version: "3.9"
-
 services:
   postgres:
     image: postgres:16
     container_name: urlshortlink-postgres
-    ports:
-      - "5432:5432"
     environment:
       POSTGRES_DB: urlshortlink
-      POSTGRES_USER: urluser
-      POSTGRES_PASSWORD: urlpass
+      POSTGRES_USER: urlshortlink
+      POSTGRES_PASSWORD: urlshortlink
+    ports:
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U urlshortlink -d urlshortlink"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build: .
+    container_name: urlshortlink-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/urlshortlink
+      SPRING_DATASOURCE_USERNAME: urlshortlink
+      SPRING_DATASOURCE_PASSWORD: urlshortlink
 
 volumes:
   pgdata:
